@@ -6,7 +6,7 @@
 
 Sistem inventaris buku berbasis web untuk **Toko Buku Zanafa** — PT. Zanafa Group Indonesia, Pekanbaru.
 
-![Status](https://img.shields.io/badge/status-perancangan-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-prototipe%20frontend-orange?style=for-the-badge)
 ![Arsitektur](https://img.shields.io/badge/arsitektur-MVC-blue?style=for-the-badge)
 ![Cabang](https://img.shields.io/badge/cabang-3-green?style=for-the-badge)
 ![Mata Kuliah](https://img.shields.io/badge/MSI4104-Kelompok%206-purple?style=for-the-badge)
@@ -29,7 +29,7 @@ Sistem inventaris buku berbasis web untuk **Toko Buku Zanafa** — PT. Zanafa Gr
 ---
 
 > [!NOTE]
-> Proyek ini masih di **fase analisis & perancangan**. Belum ada kode aplikasi. Arsitektur infrastruktur sudah ditetapkan (lihat [Arsitektur Sistem](#arsitektur-sistem)), tetapi bahasa dan framework MVC aplikasinya belum dipilih. Implementasi dijadwalkan mulai pertengahan Oktober 2026.
+> **Prototipe frontend sudah bisa dicoba** (lihat [Menjalankan frontend](#menjalankan-frontend)), memakai data contoh di browser. Backend dan database belum dibuat, dan bahasa serta framework MVC untuk backend belum dipilih. Implementasi backend dijadwalkan mulai pertengahan Oktober 2026.
 
 ## Masalah yang Diselesaikan
 
@@ -256,10 +256,32 @@ gantt
 - [ ] Setup Docker Compose, VPS, domain + HTTPS
 - [ ] Pipeline CI/CD GitHub Actions (test → build → push GHCR → deploy)
 - [ ] Backup database terjadwal & monitoring dasar
-- [ ] Autentikasi, dashboard, katalog
-- [ ] Cek stok antar cabang, kelola stok, riwayat
-- [ ] Notifikasi email stok menipis, laporan
+- [x] Prototipe frontend semua layar wireframe (data contoh di browser)
+- [ ] Backend: autentikasi, katalog, stok antar cabang, kelola stok, riwayat
+- [ ] Notifikasi email stok menipis, ekspor laporan dari server
+- [ ] Menyambungkan frontend ke API backend
 - [ ] Deploy & demo di Kompetisi Sistem
+
+## Menjalankan frontend
+
+Frontend berupa HTML, CSS, dan JavaScript biasa tanpa proses build. Karena memakai ES modules, harus dibuka lewat server HTTP:
+
+```bash
+python3 -m http.server 8080 --directory frontend
+```
+
+Lalu buka http://localhost:8080. Akun contoh (password semuanya `zanafa123`):
+
+| Username | Peran |
+|---|---|
+| `sari` | Staff Cabang 1 |
+| `dimas` | Staff Cabang 2 |
+| `nurul` | Staff Cabang 3 |
+| `rahmat` | Manager |
+
+Animasi memakai CSS dan [GSAP](https://gsap.com) 3.15 yang disimpan lokal di `frontend/vendor/`, dan otomatis dikurangi untuk pengguna yang mengaktifkan "kurangi gerak" di perangkatnya.
+
+Tanpa akun, pilih **Cek stok tanpa login** di halaman masuk. Dari layar mana pun, tekan `/` untuk mencari buku. Cara menyambungkan frontend ke backend dijelaskan di [`frontend/BACKEND-INTEGRATION.md`](frontend/BACKEND-INTEGRATION.md).
 
 ## Batasan Proyek
 

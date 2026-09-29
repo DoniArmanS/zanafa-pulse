@@ -1,0 +1,67 @@
+/* Zanafa Pulse — design tokens. Sumber tunggal; salin ke frontend/css/tokens.css. */
+/* Font dimuat lewat <link> di index.html: Plus Jakarta Sans 400–800 */
+
+:root{
+  /* Warna dari logo */
+  --hijau-900:#123F24;
+  --hijau-800:#185632;
+  --hijau-700:#1F6B3A;
+  --hijau-50:#EAF3ED;
+  --kuning-500:#E9B21C;
+  --kuning-100:#FBF0CC;
+  --merah-600:#B42318;
+  --merah-700:#8F1B12;
+  --merah-50:#FDECEA;
+
+  /* Netral bernuansa hijau */
+  --kertas:#F5F7F3;
+  --putih:#FFFFFF;
+  --garis:#DCE3DA;
+  --garis-kuat:#C4CEC2;
+  --tinta:#17241C;
+  --tinta-2:#4E5E54;
+  --tinta-3:#7A887F;
+
+  /* Tipografi */
+  --font:"Plus Jakarta Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fs-angka:44px;
+  --fs-judul:28px;
+  --fs-bagian:18px;
+  --fs-isi:14px;
+  --fs-label:12.5px;
+  --fs-kecil:12px;
+
+  /* Bentuk & ruang */
+  --r-kecil:6px;
+  --r-panel:12px;
+  --ruang-1:4px; --ruang-2:8px; --ruang-3:12px; --ruang-4:16px; --ruang-5:24px; --ruang-6:32px; --ruang-7:48px;
+  --tinggi-kontrol:40px;
+  --lebar-konten:1200px;
+
+  /* Bayangan (hanya untuk elemen yang melayang) */
+  --bayang-kecil:0 1px 2px rgba(18,63,36,.08);
+  --bayang-angkat:0 1px 2px rgba(18,63,36,.06), 0 12px 32px -14px rgba(18,63,36,.28);
+
+  /* Gerak */
+  --ease:cubic-bezier(0.23,1,0.32,1);          /* ease-out kuat: masuk/keluar */
+  --ease-in-out:cubic-bezier(0.77,0,0.175,1);  /* bergerak di layar */
+  --cepat:120ms;
+  --sedang:180ms;
+  --lambat:220ms;
+
+  /* Pita logo */
+  --pita:linear-gradient(90deg, var(--kuning-500) 0 33.3%, var(--merah-600) 33.3% 66.6%, var(--hijau-700) 66.6% 100%);
+
+  --fokus:0 0 0 3px color-mix(in srgb, var(--kuning-500) 45%, transparent);
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--kertas);color:var(--tinta);font-family:var(--font);font-size:var(--fs-isi);line-height:1.5;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid color-mix(in srgb, var(--kuning-500) 70%, transparent);outline-offset:2px}
+.angka{font-variant-numeric:tabular-nums}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

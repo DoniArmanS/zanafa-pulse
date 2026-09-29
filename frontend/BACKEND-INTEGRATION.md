@@ -1,91 +1,90 @@
-# Panduan Integrasi Backend — Zanafa Bookstore
+# Integrasi Backend — Zanafa Pulse
 
-Dokumen ini untuk yang akan membuat backend & men-deploy aplikasi ini secara
-online. Saat ini seluruh aplikasi adalah **prototipe front-end murni**: semua
-data ada di `js/data.js` sebagai array biasa, dan setiap "penyimpanan" hanya
-mengubah array itu di memori browser (hilang saat halaman di-refresh). Belum
-ada satu pun pemanggilan API (`fetch`/`axios`) di dalam kode.
+Panduan untuk menyambungkan frontend ini ke backend (API + PostgreSQL).
 
-## 1. Deploy tampilannya (tanpa backend dulu)
+## Kondisi sekarang
 
-Tidak butuh proses build. Folder ini bisa langsung di-upload ke static hosting
-apa pun: Netlify, Vercel, GitHub Pages, Cloudflare Pages, atau di-serve lewat
-Nginx/Apache biasa. Cukup pastikan struktur folder (`index.html`, `css/`,
-`js/`, `assets/`) tetap utuh dan relatif satu sama lain.
+- Frontend berjalan penuh tanpa backend. Data contoh dibuat oleh `js/data/seed.js` dan disimpan di `localStorage` browser (kunci `zanafa-db-v1`), jadi perubahan tetap ada setelah halaman dimuat ulang.
+- **Semua akses data lewat satu file: `js/api.js`.** Halaman tidak pernah membaca data langsung. Untuk menyambung ke backend, cukup ganti isi fungsi di `api.js` dengan `fetch("/api/...")`. Halaman lain tidak perlu diubah selama bentuk data yang dikembalikan sama.
+- Setiap fungsi `api.js` mengembalikan `Promise` dan melempar `ApiError(kode, pesan, field)` saat gagal. Halaman sudah menangani kode berikut:
 
-## 2. Login saat ini PALSU
+| `kode` | Arti | Yang dilakukan halaman |
+|---|---|---|
+| `SESI` | Belum login atau sesi habis (HTTP 401) | Kembali ke halaman masuk |
+| `AKSES` | Role tidak berhak (HTTP 403) | Menampilkan pesan dari server |
+| `VALIDASI` | Isian salah (HTTP 422), `field` = nama isian | Pesan tampil di bawah isian itu |
+| `TIDAK_ADA` | Data tidak ditemukan (HTTP 404) | Halaman "tidak ditemukan" |
+| `KONFLIK` | Perubahan tidak bisa dibatalkan (HTTP 409) | Pesan di toast |
+| `KREDENSIAL` | Username/password salah | Pesan di form masuk |
+| lainnya | Jaringan/server error | Panel error dengan tombol "Coba lagi" |
 
-Fungsi `doLogin()` di `js/render.js` (baris ±71) menerima **username/password
-apa saja** — tidak ada validasi ke server. Untuk versi sungguhan:
-- Ganti isi `doLogin()` agar memanggil endpoint login (lihat tabel di bawah)
-- Simpan token/session yang dikembalikan backend (misalnya di variabel
-  `state.token`, atau `localStorage` jika backend memakai JWT)
-- Sertakan token itu di setiap request API berikutnya
+Pesan (`pesan`) dari server langsung ditampilkan ke pengguna, jadi tulis dalam bahasa Indonesia yang menjelaskan cara memperbaikinya. Contoh: "Stok Cabang 1 tinggal 2. Jumlah yang dikurangi tidak boleh lebih dari 2."
 
-## 3. Model data yang dipakai front-end
+## Pemetaan fungsi → endpoint (usulan)
 
-**Book** (lihat contoh di `js/data.js` baris ±16):
+| Fungsi `api.js` | Method & endpoint | Kelas/method di class diagram | Akses |
+|---|---|---|---|
+| `login(username, password)` | `POST /api/auth/login` | `User.login()` | publik |
+| `logout()` | `POST /api/auth/logout` | `User.logout()` | login |
+| `sesiSaatIni()` | `GET /api/auth/saya` (sekali saat aplikasi dibuka, lalu disimpan) | `User.getRole()` | login |
+| `getKategori()` | `GET /api/kategori` | `Kategori.read()` | publik |
+| `getBuku({q, kategori, status, cabang, hal, per, urut})` | `GET /api/buku?…` | `Buku.cariBuku()` | publik |
+| `getBukuDetail(kode)` | `GET /api/buku/:kode` | `Buku.getInfoBuku()` + `Stok.lihatStokAntarCabang()` | publik |
+| `getTerlaris({cabang, hari, batas})` | `GET /api/buku/terlaris?…` | `RiwayatStok.getBukuTerlaris()` | publik |
+| `ubahStok({kode, cabang, jenis, jumlah, keterangan})` | `POST /api/stok/:kode/perubahan` | `Stok.updateJumlah()` → `RiwayatStok.catatPerubahan()` → `Stok.cekStokMinimum()` → `Notifikasi.buatNotifikasi()` | login |
+| `batalkanPerubahan(idRiwayat)` | `DELETE /api/riwayat/:id` | — (hanya perubahan terakhir pada baris stok itu) | login |
+| `tambahJudul(data)` | `POST /api/buku` | `Buku.tambahBuku()` + stok awal | login |
+| `getRiwayat({…filter, hal, per})` | `GET /api/riwayat?…` | `Laporan.filterLaporan()` | Manager |
+| `getRiwayatBuku(kode, cabang, batas)` | `GET /api/riwayat?kode=…&cabang=…&per=…` | `RiwayatStok.getRiwayat()` | login |
+| `eksporRiwayat(filter)` | `GET /api/laporan/riwayat.csv?…` | `Laporan.generateLaporan()` | Manager |
+| `getStaff()` | `GET /api/pengguna` | — | Manager |
+| `getDashboardStaff()` | `GET /api/dashboard/staff` | `Dashboard.*` (cabang dari akun) | Staff |
+| `getDashboardManager()` | `GET /api/dashboard/manager` | `Dashboard.*` (semua cabang) | Manager |
+
+## Aturan yang wajib ditegakkan di backend
+
+Frontend sudah memeriksa hal-hal ini supaya pengguna langsung mendapat umpan balik, tapi **backend tetap harus memeriksanya lagi**, karena frontend bisa diakali.
+
+1. **Role dan cabang berasal dari akun**, bukan dari isian form. Staff hanya boleh mengubah stok dan menambah stok awal di `idCabang` miliknya. Manager boleh semua cabang.
+2. **Jenis perubahan**: `tambah` (jumlah ≥ 1), `kurang` (1 ≤ jumlah ≤ stok sekarang), `koreksi` (jumlah = hasil hitung, ≥ 0, berbeda dari stok sekarang). Stok tidak pernah negatif.
+3. **Riwayat** menyimpan `jumlah` sebagai selisih (`sesudah − sebelum`), plus `sebelum`, `sesudah`, `idUser`, waktu, dan `keterangan` (maks. 140 karakter). Untuk judul baru, jenisnya `judul_baru` dan `sebelum = 0`.
+4. **Menipis** = `stok < stokMinimum`, bukan `<=`. Setiap perubahan yang membuat stok di bawah minimum membuat satu `Notifikasi` dan mengirim email ke Manager. Jika email gagal, simpan `statusKirim = false` untuk dicoba ulang (`Notifikasi.catatKegagalan()`).
+5. **Buku terlaris** = jumlah riwayat jenis `kurang` dalam 30 hari terakhir.
+6. **Kode buku unik** (tidak peka huruf besar/kecil), 3–20 karakter huruf, angka, atau tanda hubung.
+7. **Ekspor CSV**: nilai teks yang diawali `=`, `+`, `-`, atau `@` diberi awalan `'` untuk mencegah formula injection di Excel.
+
+## Bentuk data yang dipakai frontend
+
 ```js
-{
-  kode: "BK-001",              // string, unik
-  judul: "Belajar Data Untuk Pemula",
-  pengarang: "Ayu Lestari",
-  penerbit: "Penerbit X",
-  kategori: "Technology",      // salah satu dari 30 genre di CATEGORIES (js/data.js)
-  harga: 85000,                // number, rupiah
-  tahun: 2022,
-  stok: { C1: 2, C2: 10, C3: 6 },  // jumlah stok per cabang
-  min: 5,                      // batas minimum sebelum dianggap "menipis"
-  terjual: 12,                 // jumlah terjual (untuk buku terlaris)
-  cover: "assets/covers/....jpg"   // opsional, URL gambar sampul
-}
+// Buku (hasil getBuku / getBukuDetail)
+{ kode: "BK-001", judul: "Laut Bercerita", pengarang: "Leila S. Chudori", penerbit: "KPG",
+  kategori: "Novel", tahun: 2017, harga: 115000, min: 5,
+  sampul: "https://…" | null,
+  stok: [7, 1, 9] }            // index 0 = Cabang 1, 1 = Cabang 2, 2 = Cabang 3
+
+// Riwayat
+{ id: 312, tanggal: "2026-09-30T04:15:00.000Z", idUser: 1, staff: "Sari Wulandari", cabang: 1,
+  kode: "BK-001", judul: "Laut Bercerita", jenis: "kurang", jumlah: -5, sebelum: 7, sesudah: 2,
+  keterangan: "Terjual" }
+
+// Daftar berhalaman (getBuku, getRiwayat)
+{ items: [...], total: 25, halaman: 1, totalHalaman: 3, per: 10 }
+
+// Hasil ubahStok
+{ buku: Buku, riwayat: Riwayat, notifikasi: { id, pesan, tanggal, statusKirim } | null }
 ```
 
-**HistoryEntry** (contoh di `js/data.js` baris ±47):
-```js
-{
-  tanggal: "15/09/26", waktu: "09:12",
-  staff: "Staff A", cabang: "C1",
-  kode: "BK-001", judul: "Belajar Data Untuk Pemula",
-  jenis: "Tambah" | "Kurang" | "Update (Judul Baru)",
-  jumlah: -2,                  // number (bisa negatif), atau string untuk "Update (Judul Baru)"
-  sebelum: 4, sesudah: 2        // jumlah stok sebelum/sesudah, atau "-" untuk buku baru
-}
+Bentuk lengkap tiap fungsi bisa dilihat langsung di `js/api.js`. Fungsi-fungsinya pendek dan sudah diberi nama sesuai class diagram.
+
+## Menjalankan frontend secara lokal
+
+Frontend memakai ES modules, jadi harus dibuka lewat server HTTP, bukan dengan klik dua kali file `index.html`:
+
+```bash
+python3 -m http.server 8080 --directory frontend
+# buka http://localhost:8080
 ```
 
-**Profile** (`js/data.js` baris ±55) — data profil pengguna yang login.
+Akun contoh: `sari`, `dimas`, `nurul` (Staff Cabang 1–3) dan `rahmat` (Manager), semua dengan password `zanafa123`. Tombol "Pulihkan data contoh" di halaman masuk mengembalikan data ke kondisi awal.
 
-## 4. Endpoint yang disarankan
-
-Nama path di bawah cuma saran — sesuaikan dengan konvensi backend teman kamu.
-Yang penting bentuk request/response-nya cocok dengan apa yang dibutuhkan tiap
-halaman.
-
-| Method | Endpoint | Dipakai di | Request | Response |
-|---|---|---|---|---|
-| POST | `/api/auth/login` | `doLogin()` — `js/render.js` | `{ username, password, role }` | `{ token, username, role, cabang }` |
-| GET | `/api/books` | Katalog, Cek Stok, Kelola Stok | query: `q`, `kategori`, `page` | daftar `Book[]` + total halaman |
-| GET | `/api/books/:kode` | Cek Stok, Kelola Stok Edit | — | satu `Book` |
-| POST | `/api/books` | `saveNewBook()` — `js/render.js` (±586) | field form "Tambah Judul Baru" | `Book` yang baru dibuat |
-| PATCH | `/api/books/:kode/stock` | `saveStockChange()` — `js/render.js` (±462) | `{ cabang, jenis: "tambah"\|"kurang", jumlah, keterangan }` | `Book` terbaru + `HistoryEntry` baru |
-| GET | `/api/history` | Riwayat Stok | query: `cabang`, `staff`, `jenis` | `HistoryEntry[]` |
-| GET | `/api/dashboard/summary?cabang=C1` | Dashboard Staff | — | total judul, stok tersedia, stok menipis, buku terlaris |
-| GET | `/api/dashboard/summary-all` | Dashboard Manager | — | ringkasan per cabang + aktivitas terbaru + notifikasi stok menipis |
-| GET | `/api/profile` | Halaman Profil | — | `Profile` milik user yang login |
-
-## 5. Di bagian kode mana harus disambungkan
-
-Semua logika yang perlu diganti dari "mengubah array lokal" menjadi
-"memanggil API" ada di dua file ini:
-- **`js/render.js`** — fungsi `doLogin()`, `saveStockChange()`, `saveNewBook()`,
-  dan bagian atas tiap fungsi `render...()` yang saat ini membaca langsung
-  dari `books`/`history` (bisa diganti jadi hasil `await fetch(...)`)
-- **`js/events.js`** — tempat semua tombol terhubung ke fungsi di atas; struktur
-  event listener-nya tidak perlu diubah, hanya isi fungsi yang dipanggilnya
-
-## 6. Aset gambar
-
-`assets/logo.png`, `assets/profile-photo.jpg`, dan `assets/covers/*.jpg`
-saat ini adalah file statis yang ikut ter-deploy bersama front-end. kalau nanti backend punya sistem upload gambar sendiri
-(S3, Cloudinary, dll.), tinggal ganti nilai `cover`/`photo` pada data yang
-dikembalikan API dengan URL dari sana.
+Untuk menguji keadaan error, jalankan di konsol browser `sessionStorage.setItem("zanafa-uji-gagal", "getBuku")`. Panggilan `getBuku` berikutnya akan gagal sekali. Pakai `"*"` supaya panggilan apa pun yang berikutnya gagal.

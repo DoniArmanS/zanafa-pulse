@@ -8,6 +8,8 @@ Dokumentasi/
 
 # ---------- Instruksi lokal Claude (bukan kode, tidak perlu ikut repo) ----------
 CLAUDE.md
+.claude/
+skills-lock.json
 
 # ---------- OS files ----------
 .DS_Store
@@ -56,6 +58,7 @@ env/
 
 # ---------- PHP / Laravel ----------
 vendor/
+!frontend/vendor/
 composer.phar
 .phpunit.result.cache
 storage/*.key
@@ -77,3 +80,6 @@ logs/
 # ---------- Uploads / generated files (rapikan sesuai kebutuhan nanti) ----------
 uploads/
 tmp/
+
+# ---------- Checkpoint lokal (arsip cadangan, bukan kode) ----------
+.checkpoints/
