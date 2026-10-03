@@ -385,22 +385,22 @@ label.btn{user-select:none}
 
 /* Cahaya warna logo yang bergerak pelan */
 .aurora{position:absolute;inset:0;z-index:-2;overflow:hidden}
-.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;will-change:transform}
-.blob.b1{width:520px;height:520px;left:-140px;top:-120px;background:#2C7A4B;animation:melayang-a 22s var(--ease-in-out) infinite alternate}
-.blob.b2{width:420px;height:420px;right:-120px;top:28%;background:color-mix(in srgb,var(--kuning-500) 85%,var(--hijau-900));opacity:.26;animation:melayang-b 26s var(--ease-in-out) infinite alternate}
-.blob.b3{width:380px;height:380px;left:18%;bottom:-160px;background:color-mix(in srgb,var(--merah-600) 70%,var(--hijau-900));opacity:.14;animation:melayang-c 30s var(--ease-in-out) infinite alternate}
+.blob{position:absolute;border-radius:50%;opacity:.55;will-change:transform;background:radial-gradient(closest-side,var(--c) 0%,color-mix(in srgb,var(--c) 45%,transparent) 45%,transparent 100%)}
+.blob.b1{width:520px;height:520px;left:-140px;top:-120px;--c:#2C7A4B;animation:melayang-a 22s var(--ease-in-out) infinite alternate}
+.blob.b2{width:420px;height:420px;right:-120px;top:28%;--c:color-mix(in srgb,var(--kuning-500) 85%,var(--hijau-900));opacity:.26;animation:melayang-b 26s var(--ease-in-out) infinite alternate}
+.blob.b3{width:380px;height:380px;left:18%;bottom:-160px;--c:color-mix(in srgb,var(--merah-600) 70%,var(--hijau-900));opacity:.14;animation:melayang-c 30s var(--ease-in-out) infinite alternate}
 @keyframes melayang-a{to{transform:translate(120px,90px) scale(1.15)}}
 @keyframes melayang-b{to{transform:translate(-110px,70px) scale(.9)}}
 @keyframes melayang-c{to{transform:translate(90px,-80px) scale(1.2)}}
-.butir{position:absolute;inset:0;z-index:-1;opacity:.14;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.butir{position:absolute;inset:0;z-index:-1;opacity:.05;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 .login-merek{display:flex;align-items:center;gap:14px}
 .login-merek b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em}
 .login-merek span{color:rgba(255,255,255,.7);font-size:14px}
 
 /* Panggung kartu demo */
-.panggung{align-self:center;justify-self:center;position:relative;width:min(540px,100%);height:420px;transform-style:preserve-3d}
-.kartu-demo{position:absolute;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);box-shadow:0 24px 60px -24px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.panggung{align-self:center;justify-self:center;position:relative;width:min(540px,100%);height:420px;will-change:transform}
+.kartu-demo{position:absolute;border-radius:16px;background:rgba(32,86,56,.72);border:1px solid rgba(255,255,255,.14);box-shadow:0 24px 60px -24px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}
 .demo-utama{left:0;top:54px;width:380px;padding:20px 22px 22px;display:grid;gap:16px}
 .demo-kepala{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
 .demo-sampul{width:30px;height:42px;border-radius:3px;background:var(--bg,var(--hijau-700));box-shadow:inset 3px 0 0 rgba(0,0,0,.25),0 4px 10px rgba(0,0,0,.25)}
@@ -508,7 +508,9 @@ main{position:relative;z-index:1}
 
 /* Sorotan cahaya yang mengikuti kursor pada kartu yang bisa diklik */
 @media (hover:hover) and (pointer:fine){
-  [data-sorot]{background-image:radial-gradient(260px circle at var(--mx,-999px) var(--my,-999px),color-mix(in srgb,var(--kuning-100) 75%,transparent),transparent 70%)}
+  [data-sorot]{position:relative;overflow:hidden;isolation:isolate}
+  .cahaya{position:absolute;left:0;top:0;width:280px;height:280px;border-radius:50%;z-index:-1;pointer-events:none;opacity:0;will-change:transform;background:radial-gradient(closest-side,color-mix(in srgb,var(--kuning-100) 85%,transparent),transparent);transition:opacity .2s var(--ease)}
+  [data-sorot]:hover .cahaya{opacity:1}
 }
 
 /* Transisi antar halaman (View Transitions API) */
