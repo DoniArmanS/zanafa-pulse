@@ -1,0 +1,32 @@
+# CI backend: setiap pull request yang menyentuh backend/ wajib lolos vet, test, dan build.
+name: Backend
+
+on:
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Periksa format
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && echo "Jalankan: gofmt -w ." && exit 1)
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build ./...
+      - name: Build image Docker
+        run: docker build -t zanafa-backend:ci .
