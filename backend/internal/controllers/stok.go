@@ -12,6 +12,7 @@ import (
 
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/middleware"
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/models"
+	"github.com/DoniArmanS/zanafa-pulse/backend/internal/notifikasi"
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/respon"
 )
 
@@ -139,8 +140,11 @@ func (h *Controller) UbahStok(c *gin.Context) {
 		respon.Dari(c, err)
 		return
 	}
-	// TODO(Harits): kirim email notifikasi di latar belakang (goroutine/antrean), lalu set status_kirim = true.
-	// Jika gagal, biarkan false supaya bisa dicoba ulang (Notifikasi.catatKegagalan()).
+	// Email dikirim di latar setelah perubahan tersimpan. Kalau gagal, status_kirim tetap false
+	// dan dicoba ulang (Notifikasi.catatKegagalan()); perubahan stoknya tidak ikut batal.
+	if notif != nil {
+		notifikasi.KirimDiLatar(h.DB, notif.ID)
+	}
 
 	buku, err := h.bukuDariKode(c, kode)
 	if err != nil {

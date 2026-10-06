@@ -17,6 +17,7 @@ import (
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/config"
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/controllers"
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/database"
+	"github.com/DoniArmanS/zanafa-pulse/backend/internal/notifikasi"
 	"github.com/DoniArmanS/zanafa-pulse/backend/internal/routes"
 )
 
@@ -58,6 +59,8 @@ func main() {
 	// Matikan server dengan rapi saat menerima Ctrl+C atau sinyal stop dari Docker.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	// Email stok menipis yang gagal terkirim dicoba ulang berkala.
+	go notifikasi.KirimUlangBerkala(ctx, db)
 	go func() {
 		log.Printf("server berjalan di http://localhost:%s (lingkungan: %s)", cfg.Port, cfg.Lingkungan)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

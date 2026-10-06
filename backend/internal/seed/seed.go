@@ -127,8 +127,10 @@ func Jalankan(db *gorm.DB) error {
 				}
 			}
 		}
-		// TODO(Harits): tambahkan riwayat_stok contoh (jenis 'kurang' 40 hari terakhir)
-		// supaya dashboard dan buku terlaris punya data. Lihat buatSeed() di frontend/js/data/seed.js.
+		// Riwayat 40 hari terakhir dan notifikasi contoh, supaya dashboard dan buku terlaris punya data.
+		if err := isiRiwayatContoh(tx, cabangID); err != nil {
+			return err
+		}
 		log.Printf("seed selesai: 3 cabang, %d kategori, %d pengguna, %d buku", len(kategori), len(pengguna), len(buku))
 		return nil
 	})

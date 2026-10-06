@@ -1,0 +1,30 @@
+# Tambahan untuk mencoba di laptop. Dipakai BERSAMA docker-compose.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lokal.yml up -d --build
+#
+# Yang ditambahkan:
+#   - frontend memakai backend/integrasi-frontend/api.js (data dari server); folder frontend/ tidak diubah
+#   - email stok menipis ditampung Mailpit, lihat di http://localhost:8025
+# Jangan dipakai di VPS: di sana isi SMTP asli lewat variabel yang sama.
+
+services:
+  backend:
+    environment:
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_PENGIRIM: ${EMAIL_PENGIRIM:-Zanafa Pulse <no-reply@zanafa.local>}
+      EMAIL_OWNER: ${EMAIL_OWNER:-owner@zanafa.local}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+
+  web:
+    volumes:
+      - ./backend/integrasi-frontend/api.js:/usr/share/nginx/html/js/api.js:ro
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"

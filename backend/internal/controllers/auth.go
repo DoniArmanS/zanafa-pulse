@@ -42,11 +42,17 @@ func (h *Controller) Login(c *gin.Context) {
 		respon.Validasi(c, "username", "Isi username dan password.")
 		return
 	}
+	username := strings.TrimSpace(in.Username)
+	// Batas percobaan: 5 kali gagal per 15 menit per IP + username (middleware/batas_login.go).
+	if middleware.LoginDitahan(c, username) {
+		return
+	}
 
 	var p models.Pengguna
-	err := h.DB.WithContext(c).Where("lower(username) = lower(?) AND status", strings.TrimSpace(in.Username)).Take(&p).Error
+	err := h.DB.WithContext(c).Where("lower(username) = lower(?) AND status", username).Take(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		_ = bcrypt.CompareHashAndPassword(hashPalsu, []byte(in.Password))
+		middleware.CatatLoginGagal(c, username)
 		respon.Kredensial(c)
 		return
 	}
@@ -55,10 +61,11 @@ func (h *Controller) Login(c *gin.Context) {
 		return
 	}
 	if bcrypt.CompareHashAndPassword([]byte(p.PasswordHash), []byte(in.Password)) != nil {
+		middleware.CatatLoginGagal(c, username)
 		respon.Kredensial(c)
 		return
 	}
-	// TODO(Harits): batasi percobaan login (mis. 5 kali gagal per 15 menit per IP/username).
+	middleware.HapusCatatanLogin(c, username)
 
 	token, hash, err := middleware.BuatToken()
 	if err != nil {
