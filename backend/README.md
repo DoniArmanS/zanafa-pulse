@@ -28,7 +28,6 @@ backend/
     email/                  ← kirim email lewat SMTP
     notifikasi/             ← email stok menipis + kirim ulang yang gagal
     seed/                   ← data contoh (buku, akun, riwayat 40 hari)
-  integrasi-frontend/api.js ← versi frontend/js/api.js yang memanggil API ini
   Dockerfile
 ```
 
@@ -92,7 +91,7 @@ Untuk mencoba di laptop, pakai Mailpit lewat `docker-compose.lokal.yml` (lihat k
 
 ## Menyambungkan frontend
 
-`frontend/js/api.js` masih memakai data contoh di browser. Versi yang memanggil API ini ada di `integrasi-frontend/api.js`; cara memasangnya dijelaskan di `integrasi-frontend/README.md`.
+`frontend/js/api.js` memanggil API ini langsung. Kontrak lengkapnya (fungsi, endpoint, bentuk JSON, kode galat) ada di [`../frontend/BACKEND-INTEGRATION.md`](../frontend/BACKEND-INTEGRATION.md).
 
 ## Pengujian API
 

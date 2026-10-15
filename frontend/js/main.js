@@ -80,7 +80,13 @@ async function tampilkan() {
   }
 }
 
+// Tanyakan sesi login ke server sekali sebelum halaman pertama tampil.
+await api.muatSesi();
 window.addEventListener("hashchange", tampilkan);
+window.addEventListener("zanafa:sesi-habis", () => {
+  const { path } = bacaHash();
+  if (!path.startsWith("/login")) pergi("/login", { ke: location.hash.slice(1) });
+});
 pasangSorotKursor();
 cari.pasangPintasan((kode) => pergi(modeSekarang === "publik" ? `/publik/stok/${encodeURIComponent(kode)}` : `/stok/${encodeURIComponent(kode)}`));
 

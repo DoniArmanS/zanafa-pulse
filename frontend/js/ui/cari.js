@@ -89,10 +89,9 @@ export async function buka() {
   lapisan.hidden = false;
   input.value = "";
   pasang(daftarEl, html`<li class="kosong-teks">Memuat…</li>`);
-  requestAnimationFrame(() => {
-    lapisan.classList.add("buka");
-    input.focus();
-  });
+  // Fokus langsung (bukan di frame berikutnya) supaya huruf yang diketik cepat setelah "/" tidak hilang.
+  lapisan.classList.add("buka");
+  input.focus();
   document.documentElement.classList.add("terkunci");
   const nomor = ++urutan;
   try {

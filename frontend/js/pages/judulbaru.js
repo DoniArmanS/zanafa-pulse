@@ -121,12 +121,20 @@ export default async function judulbaru(ctx) {
     }
   }
 
+  // Kode kembar ditanyakan ke server saat mengetik; server memeriksa lagi saat disimpan.
+  let urutKode = 0;
   const cekKode = debounce(async () => {
     const k = nilai("kode").trim();
+    const nomor = ++urutKode;
     if (!k) return tandai("kode", "");
-    const g = api.validasiJudul({ ...data(), kategori: "x", judul: "x", pengarang: "x", penerbit: "x", harga: 1, tahun: tahunIni, stokAwal: 0, min: 0 });
-    tandai("kode", g?.field === "kode" ? g.pesan : "");
-  }, 250);
+    if (!api.kodeValid(k)) return tandai("kode", "Kode hanya boleh huruf, angka, dan tanda hubung (3–20 karakter).");
+    try {
+      const tersedia = await api.kodeTersedia(k);
+      if (nomor === urutKode && ctx.aktif()) tandai("kode", tersedia ? "" : `Kode ${k.toUpperCase()} sudah dipakai buku lain.`);
+    } catch (_) {
+      /* jaringan gagal: biarkan, server tetap memeriksa saat disimpan */
+    }
+  }, 300);
 
   form.addEventListener("input", (e) => {
     const id = e.target.id;
