@@ -17,6 +17,22 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # Database khusus uji: test API di internal/controllers dilewati tanpa DATABASE_URL_UJI.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: zanafa_uji
+          POSTGRES_USER: zanafa
+          POSTGRES_PASSWORD: uji-ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U zanafa -d zanafa_uji"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL_UJI: postgres://zanafa:uji-ci@localhost:5432/zanafa_uji?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -24,7 +40,13 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
       - name: Periksa format
-        run: test -z "$(gofmt -l .)" || (gofmt -l . && echo "Jalankan: gofmt -w ." && exit 1)
+        run: |
+          belum=$(gofmt -l .)
+          if [ -n "$belum" ]; then
+            echo "File berikut belum rapi. Jalankan 'gofmt -w .' di folder backend:"
+            echo "$belum"
+            exit 1
+          fi
       - run: go vet ./...
       - run: go test ./...
       - run: go build ./...
