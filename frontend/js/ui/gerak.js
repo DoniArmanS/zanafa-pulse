@@ -52,11 +52,18 @@ export function pasangSorotKursor() {
     if (e.pointerType !== "mouse" || !punyaMouse()) return;
     const el = e.target.closest?.("[data-sorot]");
     if (!el) return;
+    let c = el.querySelector(":scope > .cahaya");
+    if (!c) {
+      c = document.createElement("span");
+      c.className = "cahaya";
+      c.setAttribute("aria-hidden", "true");
+      el.prepend(c);
+    }
     cancelAnimationFrame(bingkai);
     bingkai = requestAnimationFrame(() => {
       const r = el.getBoundingClientRect();
-      el.style.setProperty("--mx", `${e.clientX - r.left}px`);
-      el.style.setProperty("--my", `${e.clientY - r.top}px`);
+      // Geser dengan transform: dikerjakan GPU, tanpa repaint.
+      c.style.transform = `translate3d(${e.clientX - r.left - 140}px, ${e.clientY - r.top - 140}px, 0)`;
     });
   }, { passive: true });
 }
