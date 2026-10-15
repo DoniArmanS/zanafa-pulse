@@ -1,7 +1,6 @@
 import * as api from "../api.js";
-import { html, pasang, $, labelPengguna } from "../util.js";
+import { html, pasang, $ } from "../util.js";
 import { setJudul } from "./bersama.js";
-import { toast } from "../ui/toast.js";
 import { gsap, kurangiGerak, punyaMouse, masuk, getar, gambarGaris } from "../ui/gerak.js";
 import { grafikMini } from "../ui/grafik.js";
 
@@ -18,7 +17,6 @@ const WARNA = ["var(--kuning-500)", "rgba(255,255,255,.88)", "#3E8A5A", "rgba(25
 
 export default async function login(ctx) {
   setJudul("Masuk");
-  const akun = api.akunContoh();
   pasang(ctx.root, html`<section class="login">
     <div class="login-panel">
       <div class="aurora" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
@@ -82,15 +80,6 @@ export default async function login(ctx) {
       <div class="pemisah"><span>atau</span></div>
       <a class="btn lebar" href="#/publik">Cek stok tanpa login</a>
       <p class="kecil-muted">Untuk melihat ketersediaan buku tanpa akun.</p>
-
-      <details class="akun-contoh">
-        <summary>Akun contoh untuk mencoba prototipe</summary>
-        <p>Semua akun memakai password <code>zanafa123</code>. Data tersimpan di browser ini saja.</p>
-        <ul>
-          ${akun.map((a) => html`<li><button type="button" class="btn teks kecil" data-akun="${a.username}"><b>${a.username}</b></button><span>${a.nama}, ${labelPengguna(a)}</span></li>`)}
-        </ul>
-        <button type="button" class="btn teks kecil" id="pulihkan">Pulihkan data contoh</button>
-      </details>
     </div>
   </section>`);
 
@@ -105,21 +94,6 @@ export default async function login(ctx) {
     pw.type = lihat ? "text" : "password";
     intip.textContent = lihat ? "Sembunyikan" : "Lihat";
     intip.setAttribute("aria-pressed", String(lihat));
-  });
-
-  ctx.root.querySelectorAll("[data-akun]").forEach((b) =>
-    b.addEventListener("click", () => {
-      $("#username", ctx.root).value = b.dataset.akun;
-      $("#password", ctx.root).value = "zanafa123";
-      tombol.focus();
-    })
-  );
-
-  $("#pulihkan", ctx.root).addEventListener("click", async (e) => {
-    e.target.disabled = true;
-    await api.pulihkanDataContoh();
-    e.target.disabled = false;
-    toast("Data contoh dipulihkan ke kondisi awal.");
   });
 
   form.addEventListener("submit", async (e) => {
@@ -145,7 +119,8 @@ export default async function login(ctx) {
       location.hash = "#" + ke;
     } catch (err) {
       if (!ctx.aktif()) return;
-      galat.textContent = err.kode === "KREDENSIAL" ? err.message : `Tidak bisa masuk: ${err.message} Coba lagi sebentar.`;
+      // Pesan dari server sudah menjelaskan cara memperbaikinya (password salah, terlalu sering mencoba).
+      galat.textContent = ["KREDENSIAL", "TERLALU_SERING"].includes(err.kode) ? err.message : `Tidak bisa masuk: ${err.message} Coba lagi sebentar.`;
       galat.hidden = false;
       p.value = "";
       p.setAttribute("aria-invalid", "true");

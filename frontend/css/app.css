@@ -446,13 +446,6 @@ label.btn{user-select:none}
 .login-form .konteks{margin-top:-8px}
 .pemisah{display:flex;align-items:center;gap:12px;color:var(--tinta-3);font-size:12.5px}
 .pemisah::before,.pemisah::after{content:"";flex:1;height:1px;background:var(--garis)}
-.akun-contoh{margin-top:10px;border:1px solid var(--garis);border-radius:10px;background:var(--putih);font-size:13px;color:var(--tinta-2)}
-.akun-contoh summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--tinta)}
-.akun-contoh[open] summary{border-bottom:1px solid var(--garis)}
-.akun-contoh p{padding:10px 14px 0}
-.akun-contoh ul{list-style:none;margin:0;padding:6px 8px}
-.akun-contoh li{display:flex;align-items:center;gap:6px}
-.akun-contoh > .btn{margin:0 8px 8px}
 
 /* Halaman khusus (akses ditolak, 404) */
 .khusus{display:grid;justify-items:start;gap:14px;padding:56px 0;max-width:560px}

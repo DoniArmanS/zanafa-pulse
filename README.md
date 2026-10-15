@@ -6,7 +6,7 @@
 
 Sistem inventaris buku berbasis web untuk **Toko Buku Zanafa** — PT. Zanafa Group Indonesia, Pekanbaru.
 
-![Status](https://img.shields.io/badge/status-prototipe%20frontend-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-pengembangan-orange?style=for-the-badge)
 ![Arsitektur](https://img.shields.io/badge/arsitektur-MVC-blue?style=for-the-badge)
 ![Cabang](https://img.shields.io/badge/cabang-3-green?style=for-the-badge)
 ![Mata Kuliah](https://img.shields.io/badge/MSI4104-Kelompok%206-purple?style=for-the-badge)
@@ -29,7 +29,7 @@ Sistem inventaris buku berbasis web untuk **Toko Buku Zanafa** — PT. Zanafa Gr
 ---
 
 > [!NOTE]
-> **Prototipe frontend sudah bisa dicoba** (lihat [Menjalankan frontend](#menjalankan-frontend)), memakai data contoh di browser. Backend dan database belum dibuat, dan bahasa serta framework MVC untuk backend belum dipilih. Implementasi backend dijadwalkan mulai pertengahan Oktober 2026.
+> **Aplikasi sudah berjalan utuh di laptop**: frontend tersambung ke backend Go dan PostgreSQL (lihat [Menjalankan aplikasi](#menjalankan-aplikasi)). Yang belum: deploy ke VPS dengan HTTPS, backup terjadwal, dan monitoring.
 
 ## Masalah yang Diselesaikan
 
@@ -252,25 +252,30 @@ gantt
 - [x] Analisis kebutuhan, use case diagram & deskripsi
 - [x] Class diagram & sequence diagram
 - [x] Menentukan arsitektur infrastruktur (Docker Compose di VPS, tanpa Kubernetes)
-- [ ] Memilih bahasa & framework MVC aplikasi
+- [x] Memilih bahasa & framework MVC aplikasi (Go + Gin + GORM)
 - [ ] Setup Docker Compose, VPS, domain + HTTPS
-- [ ] Pipeline CI/CD GitHub Actions (test → build → push GHCR → deploy)
+- [x] CI GitHub Actions: format, vet, test API dengan PostgreSQL, build image
+- [ ] CD: push image ke GHCR → deploy ke VPS → cek kesehatan → rollback
 - [ ] Backup database terjadwal & monitoring dasar
 - [x] Prototipe frontend semua layar wireframe (data contoh di browser)
-- [ ] Backend: autentikasi, katalog, stok antar cabang, kelola stok, riwayat
-- [ ] Notifikasi email stok menipis, ekspor laporan dari server
-- [ ] Menyambungkan frontend ke API backend
+- [x] Backend: autentikasi, katalog, stok antar cabang, kelola stok, riwayat
+- [x] Notifikasi email stok menipis, ekspor laporan dari server
+- [x] Menyambungkan frontend ke API backend
 - [ ] Deploy & demo di Kompetisi Sistem
 
-## Menjalankan frontend
+## Menjalankan aplikasi
 
-Frontend berupa HTML, CSS, dan JavaScript biasa tanpa proses build. Karena memakai ES modules, harus dibuka lewat server HTTP:
+Frontend (HTML, CSS, JavaScript tanpa build), backend Go, dan PostgreSQL dijalankan bersama dengan Docker Compose. Butuh Docker dan plugin Compose (Ubuntu: `sudo apt install docker-compose-v2`).
 
 ```bash
-python3 -m http.server 8080 --directory frontend
+cp .env.example .env              # lalu ganti POSTGRES_PASSWORD
+docker compose -f docker-compose.yml -f docker-compose.lokal.yml up -d --build
+docker compose run --rm backend /app/seed    # sekali saja: isi data contoh
 ```
 
-Lalu buka http://localhost:8080. Akun contoh (password semuanya `zanafa123`):
+Buka http://localhost:8080. Email stok menipis di laptop ditampung Mailpit: http://localhost:8025. Untuk mengembangkan backend tanpa Docker (pakai `go run`), lihat [`backend/README.md`](backend/README.md).
+
+Akun contoh (password semuanya `zanafa123`):
 
 | Username | Peran |
 |---|---|
@@ -281,7 +286,7 @@ Lalu buka http://localhost:8080. Akun contoh (password semuanya `zanafa123`):
 
 Animasi memakai CSS dan [GSAP](https://gsap.com) 3.15 yang disimpan lokal di `frontend/vendor/`, dan otomatis dikurangi untuk pengguna yang mengaktifkan "kurangi gerak" di perangkatnya.
 
-Tanpa akun, pilih **Cek stok tanpa login** di halaman masuk. Dari layar mana pun, tekan `/` untuk mencari buku. Cara menyambungkan frontend ke backend dijelaskan di [`frontend/BACKEND-INTEGRATION.md`](frontend/BACKEND-INTEGRATION.md).
+Tanpa akun, pilih **Cek stok tanpa login** di halaman masuk. Dari layar mana pun, tekan `/` untuk mencari buku. Kontrak antara frontend dan API dijelaskan di [`frontend/BACKEND-INTEGRATION.md`](frontend/BACKEND-INTEGRATION.md).
 
 ## Batasan Proyek
 

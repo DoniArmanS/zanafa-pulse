@@ -1,11 +1,12 @@
 # Integrasi Backend — Zanafa Pulse
 
-Panduan untuk menyambungkan frontend ini ke backend (API + PostgreSQL).
+Kontrak antara frontend dan API backend (Go + PostgreSQL, folder `backend/`).
 
-## Kondisi sekarang
+## Cara kerja
 
-- Frontend berjalan penuh tanpa backend. Data contoh dibuat oleh `js/data/seed.js` dan disimpan di `localStorage` browser (kunci `zanafa-db-v1`), jadi perubahan tetap ada setelah halaman dimuat ulang.
-- **Semua akses data lewat satu file: `js/api.js`.** Halaman tidak pernah membaca data langsung. Untuk menyambung ke backend, cukup ganti isi fungsi di `api.js` dengan `fetch("/api/...")`. Halaman lain tidak perlu diubah selama bentuk data yang dikembalikan sama.
+- **Semua akses data lewat satu file: `js/api.js`**, yang memanggil `fetch("/api/...")`. Halaman tidak pernah memanggil server langsung. Frontend dan API berada di alamat yang sama (NGINX meneruskan `/api` ke backend), jadi tidak perlu CORS.
+- **Sesi login memakai cookie `httpOnly`** yang dipasang server. JavaScript tidak menyimpan token apa pun. Saat aplikasi dibuka, `api.muatSesi()` menanyakan `GET /api/auth/saya` sekali. Kalau di tengah pemakaian server menjawab `SESI` (sesi kedaluwarsa atau dihapus), pengguna dibawa ke halaman masuk lalu dikembalikan ke halaman semula setelah login.
+- Setiap permintaan membawa header `X-Requested-With: fetch`, dan yang mengirim isi memakai `Content-Type: application/json`. Backend mewajibkan keduanya sebagai pencegah CSRF.
 - Setiap fungsi `api.js` mengembalikan `Promise` dan melempar `ApiError(kode, pesan, field)` saat gagal. Halaman sudah menangani kode berikut:
 
 | `kode` | Arti | Yang dilakukan halaman |
@@ -16,17 +17,18 @@ Panduan untuk menyambungkan frontend ini ke backend (API + PostgreSQL).
 | `TIDAK_ADA` | Data tidak ditemukan (HTTP 404) | Halaman "tidak ditemukan" |
 | `KONFLIK` | Perubahan tidak bisa dibatalkan (HTTP 409) | Pesan di toast |
 | `KREDENSIAL` | Username/password salah | Pesan di form masuk |
+| `TERLALU_SERING` | Login salah 5 kali dalam 15 menit (HTTP 429) | Pesan di form masuk |
 | lainnya | Jaringan/server error | Panel error dengan tombol "Coba lagi" |
 
 Pesan (`pesan`) dari server langsung ditampilkan ke pengguna, jadi tulis dalam bahasa Indonesia yang menjelaskan cara memperbaikinya. Contoh: "Stok Cabang 1 tinggal 2. Jumlah yang dikurangi tidak boleh lebih dari 2."
 
-## Pemetaan fungsi → endpoint (usulan)
+## Pemetaan fungsi → endpoint
 
 | Fungsi `api.js` | Method & endpoint | Kelas/method di class diagram | Akses |
 |---|---|---|---|
 | `login(username, password)` | `POST /api/auth/login` | `User.login()` | publik |
 | `logout()` | `POST /api/auth/logout` | `User.logout()` | login |
-| `sesiSaatIni()` | `GET /api/auth/saya` (sekali saat aplikasi dibuka, lalu disimpan) | `User.getRole()` | login |
+| `muatSesi()` / `sesiSaatIni()` | `GET /api/auth/saya` (sekali saat aplikasi dibuka, lalu diingat) | `User.getRole()` | login |
 | `getKategori()` | `GET /api/kategori` | `Kategori.read()` | publik |
 | `getBuku({q, kategori, status, cabang, hal, per, urut})` | `GET /api/buku?…` | `Buku.cariBuku()` | publik |
 | `getBukuDetail(kode)` | `GET /api/buku/:kode` | `Buku.getInfoBuku()` + `Stok.lihatStokAntarCabang()` | publik |
@@ -76,15 +78,10 @@ Frontend sudah memeriksa hal-hal ini supaya pengguna langsung mendapat umpan bal
 
 Bentuk lengkap tiap fungsi bisa dilihat langsung di `js/api.js`. Fungsi-fungsinya pendek dan sudah diberi nama sesuai class diagram.
 
-## Menjalankan frontend secara lokal
+## Menjalankan secara lokal
 
-Frontend memakai ES modules, jadi harus dibuka lewat server HTTP, bukan dengan klik dua kali file `index.html`:
+Frontend tidak lagi punya data contoh sendiri, jadi selalu dijalankan bersama backend. Lihat bagian **Menjalankan aplikasi** di `README.md` (root repo) atau `backend/README.md`.
 
-```bash
-python3 -m http.server 8080 --directory frontend
-# buka http://localhost:8080
-```
+Akun contoh dari seed backend: `sari`, `dimas`, `nurul` (Staff Cabang 1–3) dan `rahmat` (Manager), semua dengan password `zanafa123`.
 
-Akun contoh: `sari`, `dimas`, `nurul` (Staff Cabang 1–3) dan `rahmat` (Manager), semua dengan password `zanafa123`. Tombol "Pulihkan data contoh" di halaman masuk mengembalikan data ke kondisi awal.
-
-Untuk menguji keadaan error, jalankan di konsol browser `sessionStorage.setItem("zanafa-uji-gagal", "getBuku")`. Panggilan `getBuku` berikutnya akan gagal sekali. Pakai `"*"` supaya panggilan apa pun yang berikutnya gagal.
+Untuk menguji keadaan error tanpa mematikan server, jalankan di konsol browser `sessionStorage.setItem("zanafa-uji-gagal", "getBuku")`. Panggilan `getBuku` berikutnya akan gagal sekali. Pakai `"*"` supaya panggilan apa pun yang berikutnya gagal.
